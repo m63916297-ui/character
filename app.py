@@ -1,5 +1,6 @@
 import streamlit as st
 from personajes_data import PERSONAJES_PREDEFINIDOS, buscar_personaje_por_nombre
+from agente_personaje import crear_agente, PERSONAJE_TEMPLATES
 import random
 
 st.set_page_config(
@@ -765,14 +766,79 @@ with st.container():
     else:
         descripcion = st.text_area(
             "DESCRIPCION",
-            placeholder="Describe tu personaje o selecciona uno predefinido...",
+            placeholder="Ej: Un heroe llamado Valerius que lucha contra el mal, tiene poderes de luz",
             label_visibility="collapsed",
             height=80,
+            key="desc_input",
         )
 
-        if st.button("CREAR PERSONAJE", use_container_width=True):
+        if st.button("◈ GENERAR PERSONAJE ◈", use_container_width=True, type="primary"):
             if descripcion:
-                st.success(f"Personaje creado: {descripcion[:30]}...")
+                with st.spinner("Generando personaje..."):
+                    try:
+                        agente = crear_agente()
+                        resultado = agente.crear_personaje(descripcion)
+                        personaje = resultado["personaje_obj"]
+
+                        st.session_state.generated_character = {
+                            "nombre": personaje.nombre,
+                            "edad": personaje.edad,
+                            "raza": st.session_state.customization["race"],
+                            "clase": st.session_state.customization["class"],
+                            "planeta": "Planeta Generado",
+                            "historia": personaje.historia,
+                            "poderes": personaje.poderes,
+                            "armas": ["Arma personalizada"],
+                            "enemigos": personaje.enemigos,
+                            "amigos": ["Aliados por determinar"],
+                            "personalidad": personaje.personalidad,
+                        }
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+
+        if (
+            "generated_character" in st.session_state
+            and st.session_state.generated_character
+        ):
+            gen = st.session_state.generated_character
+            st.markdown(
+                f"""
+            <div class="panel" style="margin-top: 1rem; border-color: rgba(0, 255, 242, 0.4);">
+                <div class="panel-header">PERSONAJE GENERADO</div>
+                
+                <div class="char-name">{gen["nombre"]}</div>
+                <div class="char-subtitle">{gen["clase"]} | {gen["raza"]}</div>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">EDAD</div>
+                        <div class="info-value">{gen["edad"]}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">PLANETA</div>
+                        <div class="info-value">{gen["planeta"]}</div>
+                    </div>
+                </div>
+                
+                <div class="section-title">HISTORIA</div>
+                <div style="color: #909090; font-size: 0.9rem; line-height: 1.5;">{gen["historia"]}</div>
+                
+                <div class="section-title">PERSONALIDAD</div>
+                <div style="color: #00fff2; font-size: 0.9rem;">{gen.get("personalidad", "Por determinar")}</div>
+                
+                <div class="section-title">PODERES</div>
+                {"".join([f'<div class="list-item">{p}</div>' for p in gen["poderes"]])}
+                
+                <div class="section-title">ENEMIGOS</div>
+                {"".join([f'<div class="list-item">{e}</div>' for e in gen["enemigos"]])}
+            </div>
+            """,
+                unsafe_allow_html=True,
+            )
+
+            if st.button("LIMPIAR", key="clear_generated"):
+                del st.session_state.generated_character
+                st.rerun()
 
 # ===== RIGHT PANEL =====
 with st.container():
