@@ -329,60 +329,60 @@ with st.container():
             placeholder="Ej: Crea un heroe llamado Valerius...",
             label_visibility="collapsed",
             height=60,
+            key="desc_input",
         )
 
-        if st.button("◈ GENERAR ◈", use_container_width=True):
+        if st.button("◈ GENERAR ◈", use_container_width=True, key="btn_generar"):
             if desc:
-                with st.spinner("Generando..."):
-                    try:
-                        agente = crear_agente()
-                        result = agente.crear_personaje(desc)
-                        p = result["personaje_obj"]
+                try:
+                    agente = crear_agente()
+                    result = agente.crear_personaje(desc)
+                    p = result["personaje_obj"]
 
-                        st.session_state.generated = {
-                            "nombre": p.nombre,
-                            "edad": p.edad,
-                            "raza": st.session_state.customization["race"],
-                            "clase": st.session_state.customization["class"],
-                            "planeta": "Planeta Generado",
-                            "historia": p.historia,
-                            "poderes": p.poderes,
-                            "armas": ["Arma Custom"],
-                            "enemigos": p.enemigos,
-                            "personalidad": p.personalidad,
-                        }
-                    except Exception as e:
-                        st.error(f"Error: {e}")
+                    st.session_state.generated = {
+                        "nombre": p.nombre,
+                        "edad": p.edad,
+                        "raza": st.session_state.customization["race"],
+                        "clase": st.session_state.customization["class"],
+                        "planeta": "Planeta Generado",
+                        "historia": p.historia,
+                        "poderes": p.poderes,
+                        "armas": ["Arma Custom"],
+                        "enemigos": p.enemigos,
+                        "personalidad": p.personalidad,
+                    }
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
-        if "generated" in st.session_state:
+        # Mostrar personaje generado
+        if "generated" in st.session_state and st.session_state.generated:
             g = st.session_state.generated
-            st.markdown(
-                f"""
-            <div class="panel" style="margin-top:1rem;border-color:rgba(0,255,242,0.3)">
-                <div class="char-name">{g["nombre"]}</div>
-                <div class="char-sub">{g["clase"]} | {g["raza"]}</div>
-                
-                <div class="info-row">
-                    <div class="info-box"><div class="info-lbl">Edad</div><div class="info-val">{g["edad"]}</div></div>
-                    <div class="info-box"><div class="info-lbl">Planeta</div><div class="info-val">{g["planeta"]}</div></div>
-                </div>
-                
-                <div class="sec-title">Historia</div>
-                <div style="color:#777;font-size:0.85rem;line-height:1.5;">{g["historia"]}</div>
-                
-                <div class="sec-title">Personalidad</div>
-                <div style="color:#00fff2;font-size:0.85rem;">{g["personalidad"]}</div>
-                
-                <div class="sec-title">Poderes</div>
-                {"".join([f'<div class="list-item">{p}</div>' for p in g["poderes"]])}
-                
-                <div class="sec-title">Enemigos</div>
-                {"".join([f'<div class="list-item">{e}</div>' for e in g["enemigos"]])}
-            </div>
-            """,
-                unsafe_allow_html=True,
-            )
 
+            # Mostrar en markdown más legible
+            st.markdown("---")
+            st.markdown(f"### ⚡ {g['nombre']}")
+            st.markdown(f"**{g['clase']}** | {g['raza']} | {g['edad']}")
+            st.markdown(f"**Planeta:** {g['planeta']}")
+
+            st.markdown("---")
+            st.markdown("#### 📖 HISTORIA")
+            st.markdown(f"_{g['historia']}_")
+
+            st.markdown("#### 🎭 PERSONALIDAD")
+            st.markdown(f"*{g['personalidad']}*")
+
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown("#### 🔥 PODERES")
+                for poder in g["poderes"]:
+                    st.markdown(f"• {poder}")
+            with col2:
+                st.markdown("#### 💀 ENEMIGOS")
+                for enemigo in g["enemigos"]:
+                    st.markdown(f"• {enemigo}")
+
+            st.markdown("---")
             if st.button("Limpiar", key="clr_gen"):
                 del st.session_state.generated
                 st.rerun()
